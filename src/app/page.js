@@ -128,8 +128,8 @@ export default function Home() {
   };
 
   return (
-    <main className="relative z-10 min-h-screen flex flex-col items-center justify-center overflow-hidden">
-      <nav className="sticky top-0 z-50 w-full bg-white/10 backdrop-blur-md shadow-md border-b border-white/20 text-white">
+    <main className="relative z-10 min-h-screen bg-blue-900 text-white flex flex-col items-center justify-center overflow-hidden">
+      <nav className="sticky top-0 z-50 w-full bg-white/10 backdrop-blur-md shadow-md border-b border-white/20">
         <div className="max-w-6xl mx-auto px-6 py-3 flex justify-between items-center">
           <span className="text-xl font-bold tracking-wide">{text[lang].title}</span>
           <div className="space-x-6 text-sm flex items-center">
@@ -151,7 +151,7 @@ export default function Home() {
       </nav>
 
       <div className="flex-grow flex flex-col items-center justify-center p-6 w-full">
-        <div className="bg-white shadow-2xl rounded-2xl p-10 w-full max-w-2xl text-gray-800 border border-gray-200">
+        <div className="bg-white text-gray-800 shadow-2xl rounded-2xl p-10 w-full max-w-2xl border border-gray-200">
           <h1 className="text-4xl font-extrabold mb-4 text-center">{text[lang].title}</h1>
           <p className="text-center text-gray-600 mb-8 text-lg">{text[lang].desc}</p>
 
