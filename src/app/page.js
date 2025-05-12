@@ -212,7 +212,7 @@ export default function Home() {
       </div>
 
       <footer className="text-center py-4 text-sm text-white/70">
-        © 2025 {text[lang].title} by F=MAfia
+        © 2025 {text[lang].title} by F=MAfia SME
       </footer>
     </main>
   );
