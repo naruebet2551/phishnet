@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { distance } from 'fastest-levenshtein';
 
@@ -9,12 +10,12 @@ export default function Home() {
   const [result, setResult] = useState('');
   const [history, setHistory] = useState([]);
   const [lang, setLang] = useState('th');
-  const [loading, setLoading] = useState(false); // ✅ animation loading
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const savedLang = localStorage.getItem('phishnet_lang');
     if (savedLang) setLang(savedLang);
-
     const saved = JSON.parse(localStorage.getItem('phishnet_user_history') || '[]');
     setHistory(saved);
   }, []);
@@ -33,7 +34,7 @@ export default function Home() {
       clear: 'ล้างประวัติ',
       menuHome: 'หน้าหลัก',
       menuAbout: 'เกี่ยวกับ',
-      checking: 'กำลังตรวจสอบ...',
+      checking: 'กำลังตรวจสอบ...'
     },
     en: {
       title: 'PhishNet',
@@ -48,8 +49,8 @@ export default function Home() {
       clear: 'Clear history',
       menuHome: 'Home',
       menuAbout: 'About',
-      checking: 'Checking...',
-    },
+      checking: 'Checking...'
+    }
   };
 
   const knownDomains = ['facebook.com', 'google.com', 'paypal.com', 'apple.com', 'microsoft.com'];
@@ -58,7 +59,6 @@ export default function Home() {
     try {
       const parsed = new URL(url);
       const hostname = parsed.hostname;
-
       return knownDomains.some((domain) => {
         const d = distance(domain, hostname);
         return d <= 2 && hostname !== domain;
@@ -74,13 +74,13 @@ export default function Home() {
       return;
     }
 
-    setLoading(true); // ✅ เริ่มโหลด
+    setLoading(true);
 
     try {
       const res = await fetch('/api/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url })
       });
 
       const data = await res.json();
@@ -91,17 +91,16 @@ export default function Home() {
       );
 
       const isSpoofed = isSuspiciousDomain();
-      const isDangerous =
+      const isSuspicious =
         data.result.includes('อันตราย') ||
         data.result.includes('dangerous') ||
         hasSuspiciousWord ||
         isSpoofed;
 
-      const finalResult = isDangerous ? 'warn' : 'safe';
+      const finalResult = isSuspicious ? 'warn' : 'safe';
       setResult(finalResult);
 
       const newEntry = { url, result: finalResult };
-
       const updatedUserHistory = [newEntry, ...history].slice(0, 10);
       setHistory(updatedUserHistory);
       localStorage.setItem('phishnet_user_history', JSON.stringify(updatedUserHistory));
@@ -109,11 +108,17 @@ export default function Home() {
       const adminHistory = JSON.parse(localStorage.getItem('phishnet_admin_history') || '[]');
       const updatedAdminHistory = [newEntry, ...adminHistory].slice(0, 100);
       localStorage.setItem('phishnet_admin_history', JSON.stringify(updatedAdminHistory));
+
+      if (isSuspicious) {
+        localStorage.setItem('phishnet_last_url', url);
+        router.push('/warning');
+        return;
+      }
     } catch (error) {
       console.error('เกิดข้อผิดพลาด:', error);
       setResult('error');
     } finally {
-      setLoading(false); // ✅ จบโหลด
+      setLoading(false);
     }
   };
 
@@ -123,7 +128,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-600 to-blue-300 flex flex-col">
+    <main className="relative z-10 min-h-screen flex flex-col items-center justify-center overflow-hidden">
       <nav className="sticky top-0 z-50 w-full bg-white/10 backdrop-blur-md shadow-md border-b border-white/20 text-white">
         <div className="max-w-6xl mx-auto px-6 py-3 flex justify-between items-center">
           <span className="text-xl font-bold tracking-wide">{text[lang].title}</span>
@@ -145,8 +150,8 @@ export default function Home() {
         </div>
       </nav>
 
-      <div className="flex-grow flex flex-col items-center justify-center p-6">
-        <div className="bg-white shadow-2xl rounded-2xl p-10 w-full max-w-2xl text-gray-800 border border-gray-200 animate-fade-in-up">
+      <div className="flex-grow flex flex-col items-center justify-center p-6 w-full">
+        <div className="bg-white shadow-2xl rounded-2xl p-10 w-full max-w-2xl text-gray-800 border border-gray-200">
           <h1 className="text-4xl font-extrabold mb-4 text-center">{text[lang].title}</h1>
           <p className="text-center text-gray-600 mb-8 text-lg">{text[lang].desc}</p>
 
@@ -172,18 +177,20 @@ export default function Home() {
             </button>
           )}
 
-          {result && (
-            <div
-              className={`p-4 text-lg font-bold text-center rounded-lg ${
-                result === 'warn'
-                  ? 'bg-red-600 text-white'
-                  : result === 'safe'
-                  ? 'bg-green-500 text-white'
-                  : result === 'empty'
-                  ? 'bg-yellow-300 text-black'
-                  : 'bg-gray-400 text-white'
-              }`}
-            >
+          {result && result === 'safe' && (
+            <div className="p-4 text-lg font-bold text-center rounded-lg bg-green-500 text-white">
+              {text[lang][result]}
+            </div>
+          )}
+
+          {result === 'empty' && (
+            <div className="p-4 text-lg font-bold text-center rounded-lg bg-yellow-300 text-black">
+              {text[lang][result]}
+            </div>
+          )}
+
+          {result === 'error' && (
+            <div className="p-4 text-lg font-bold text-center rounded-lg bg-gray-400 text-white">
               {text[lang][result]}
             </div>
           )}
@@ -211,8 +218,8 @@ export default function Home() {
         </div>
       </div>
 
-      <footer className="text-center py-4 text-sm text-white/70">
-        © 2025 {text[lang].title} by F=MAfia 
+      <footer className="text-center py-4 text-sm text-white/70 z-10">
+        © 2025 {text[lang].title} by ceo boss
       </footer>
     </main>
   );
