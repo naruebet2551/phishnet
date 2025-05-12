@@ -53,9 +53,7 @@ export default function Home() {
     }
   };
 
-  const knownDomains = ['facebook.com', 'google.com', 'paypal.com', 'apple.com', 'microsoft.com'];
-  const gamblingKeywords = ['bet', 'casino', 'slot', 'หวย', 'บาคาร่า', 'แทงบอล', 'jackpot', 'พนัน'];
-  const gamblingNumbers = ['888', '777', '168', '999', '123', '456'];
+  const knownDomains = ['facebook.com', 'google.com', 'paypal.com', 'apple.com'];
 
   const isSuspiciousDomain = () => {
     try {
@@ -79,15 +77,6 @@ export default function Home() {
     setLoading(true);
 
     try {
-      const hasGamblingKeyword = gamblingKeywords.some((word) => url.toLowerCase().includes(word));
-      const hasGamblingNumber = gamblingNumbers.some((num) => url.includes(num));
-
-      if (hasGamblingKeyword || hasGamblingNumber) {
-        setResult('warn');
-        router.push('/warning');
-        return;
-      }
-
       const res = await fetch('/api/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,9 +89,7 @@ export default function Home() {
       const hasSuspiciousWord = suspiciousWords.some((word) => url.toLowerCase().includes(word));
       const isSpoofed = isSuspiciousDomain();
 
-      const finalResult =
-        data.result.includes('danger') || hasSuspiciousWord || isSpoofed ? 'warn' : 'safe';
-
+      const finalResult = data.result === 'danger' || hasSuspiciousWord || isSpoofed ? 'warn' : 'safe';
       setResult(finalResult);
 
       const newEntry = { url, result: finalResult };
