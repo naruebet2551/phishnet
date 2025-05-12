@@ -54,6 +54,8 @@ export default function Home() {
   };
 
   const knownDomains = ['facebook.com', 'google.com', 'paypal.com', 'apple.com', 'microsoft.com'];
+  const gamblingKeywords = ['bet', 'casino', 'slot', 'หวย', 'บาคาร่า', 'แทงบอล', 'jackpot', 'พนัน'];
+  const gamblingNumbers = ['888', '777', '168', '999', '123', '456'];
 
   const isSuspiciousDomain = () => {
     try {
@@ -77,6 +79,15 @@ export default function Home() {
     setLoading(true);
 
     try {
+      const hasGamblingKeyword = gamblingKeywords.some((word) => url.toLowerCase().includes(word));
+      const hasGamblingNumber = gamblingNumbers.some((num) => url.includes(num));
+
+      if (hasGamblingKeyword || hasGamblingNumber) {
+        setResult('warn');
+        router.push('/warning');
+        return;
+      }
+
       const res = await fetch('/api/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -86,18 +97,12 @@ export default function Home() {
       const data = await res.json();
 
       const suspiciousWords = ['login', 'bank', 'free'];
-      const hasSuspiciousWord = suspiciousWords.some((word) =>
-        url.toLowerCase().includes(word)
-      );
-
+      const hasSuspiciousWord = suspiciousWords.some((word) => url.toLowerCase().includes(word));
       const isSpoofed = isSuspiciousDomain();
-      const isSuspicious =
-        data.result.includes('อันตราย') ||
-        data.result.includes('dangerous') ||
-        hasSuspiciousWord ||
-        isSpoofed;
 
-      const finalResult = isSuspicious ? 'warn' : 'safe';
+      const finalResult =
+        data.result.includes('danger') || hasSuspiciousWord || isSpoofed ? 'warn' : 'safe';
+
       setResult(finalResult);
 
       const newEntry = { url, result: finalResult };
@@ -109,16 +114,21 @@ export default function Home() {
       const updatedAdminHistory = [newEntry, ...adminHistory].slice(0, 100);
       localStorage.setItem('phishnet_admin_history', JSON.stringify(updatedAdminHistory));
 
-      if (isSuspicious) {
-        localStorage.setItem('phishnet_last_url', url);
+      if (finalResult === 'warn') {
         router.push('/warning');
         return;
       }
-    } catch (error) {
-      console.error('เกิดข้อผิดพลาด:', error);
+    } catch (err) {
+      console.error(err);
       setResult('error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      checkPhishing();
     }
   };
 
@@ -128,20 +138,20 @@ export default function Home() {
   };
 
   return (
-    <main className="relative z-10 min-h-screen bg-blue-900 text-white flex flex-col items-center justify-center overflow-hidden">
-      <nav className="sticky top-0 z-50 w-full bg-white/10 backdrop-blur-md shadow-md border-b border-white/20">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex justify-between items-center">
-          <span className="text-xl font-bold tracking-wide">{text[lang].title}</span>
-          <div className="space-x-6 text-sm flex items-center">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-900 via-blue-800 to-blue-700 text-white">
+      <nav className="w-full bg-blue-950 bg-opacity-80 py-4 shadow-md">
+        <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
+          <span className="text-xl font-bold">{text[lang].title}</span>
+          <div className="space-x-4 text-sm">
             <Link href="/" className="hover:underline">{text[lang].menuHome}</Link>
             <Link href="/about" className="hover:underline">{text[lang].menuAbout}</Link>
             <select
+              value={lang}
               onChange={(e) => {
                 setLang(e.target.value);
                 localStorage.setItem('phishnet_lang', e.target.value);
               }}
-              value={lang}
-              className="bg-transparent border px-2 py-1 rounded text-white"
+              className="bg-blue-700 px-2 py-1 rounded"
             >
               <option value="th">ไทย</option>
               <option value="en">EN</option>
@@ -150,66 +160,56 @@ export default function Home() {
         </div>
       </nav>
 
-      <div className="flex-grow flex flex-col items-center justify-center p-6 w-full">
-        <div className="bg-white text-gray-800 shadow-2xl rounded-2xl p-10 w-full max-w-2xl border border-gray-200">
-          <h1 className="text-4xl font-extrabold mb-4 text-center">{text[lang].title}</h1>
-          <p className="text-center text-gray-600 mb-8 text-lg">{text[lang].desc}</p>
+      <div className="flex flex-col items-center p-6 w-full max-w-2xl">
+        <div className="bg-white text-gray-800 rounded-2xl shadow-xl p-8 w-full mt-8">
+          <h1 className="text-3xl font-bold text-center mb-4">{text[lang].title}</h1>
+          <p className="text-center text-gray-600 mb-6">{text[lang].desc}</p>
 
           <input
             type="text"
             placeholder={text[lang].placeholder}
-            className="w-full p-4 rounded-xl border border-gray-300 bg-gray-100 text-gray-800 placeholder-gray-500 mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-400"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={handleKeyPress}
+            className="w-full p-4 border border-gray-300 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-400"
           />
 
           {loading ? (
-            <div className="flex items-center justify-center mb-6">
-              <div className="w-6 h-6 border-4 border-white border-t-yellow-400 rounded-full animate-spin"></div>
-              <span className="ml-3 text-gray-700 font-medium">{text[lang].checking}</span>
+            <div className="text-center mb-4">
+              <div className="w-6 h-6 border-4 border-white border-t-yellow-400 rounded-full animate-spin mx-auto"></div>
+              <div className="mt-2">{text[lang].checking}</div>
             </div>
           ) : (
             <button
               onClick={checkPhishing}
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 rounded-xl shadow-md transition duration-200 mb-6"
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 rounded-xl"
             >
               {text[lang].check}
             </button>
           )}
 
-          {result && result === 'safe' && (
-            <div className="p-4 text-lg font-bold text-center rounded-lg bg-green-500 text-white">
-              {text[lang][result]}
-            </div>
-          )}
-
-          {result === 'empty' && (
-            <div className="p-4 text-lg font-bold text-center rounded-lg bg-yellow-300 text-black">
-              {text[lang][result]}
-            </div>
-          )}
-
-          {result === 'error' && (
-            <div className="p-4 text-lg font-bold text-center rounded-lg bg-gray-400 text-white">
+          {result && result !== 'warn' && (
+            <div className={`mt-4 p-3 text-center rounded-xl font-bold text-lg ${
+              result === 'safe' ? 'bg-green-500 text-white' :
+              result === 'empty' ? 'bg-yellow-200 text-black' :
+              'bg-gray-500 text-white'
+            }`}>
               {text[lang][result]}
             </div>
           )}
 
           {history.length > 0 && (
-            <div className="mt-8">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-md font-semibold text-gray-800">{text[lang].history}</h2>
-                <button
-                  onClick={clearHistory}
-                  className="text-sm text-red-500 hover:text-red-700 underline"
-                >
+            <div className="mt-6">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="font-semibold">{text[lang].history}</h2>
+                <button onClick={clearHistory} className="text-red-600 hover:underline text-sm">
                   {text[lang].clear}
                 </button>
               </div>
-              <ul className="space-y-1 text-sm text-gray-700 max-h-40 overflow-y-auto">
-                {history.map((item, index) => (
-                  <li key={index}>
-                    <span className="font-medium">{item.url}</span> → {text[lang][item.result]}
+              <ul className="text-sm space-y-1 max-h-32 overflow-y-auto">
+                {history.map((item, i) => (
+                  <li key={i}>
+                    {item.url} → {text[lang][item.result]}
                   </li>
                 ))}
               </ul>
@@ -218,8 +218,8 @@ export default function Home() {
         </div>
       </div>
 
-      <footer className="text-center py-4 text-sm text-white/70 z-10">
-        © 2025 {text[lang].title} by TEAM F=MAfia SME PRS
+      <footer className="mt-10 text-sm text-white/70 text-center py-4">
+        © 2025 {text[lang].title} by ceo boss
       </footer>
     </main>
   );
