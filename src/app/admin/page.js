@@ -91,7 +91,7 @@ export default function AdminPage() {
             </button>
             <button
               onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow"
             >
               Logout
             </button>
