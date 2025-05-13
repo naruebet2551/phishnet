@@ -49,11 +49,11 @@ export default function AdminPage() {
   };
 
   const deleteSelected = async () => {
-    const confirmed = confirm("คุณต้องการลบรายการที่เลือกใช่หรือไม่?");
-    if (!confirmed) return;
+    const confirmed1 = confirm("คุณต้องการลบรายการที่เลือกใช่หรือไม่?");
+    if (!confirmed1) return;
     if (selected.length === 0) return;
-    const confirmed = confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการที่เลือก?');
-    if (!confirmed) return;
+    const confirmed2 = confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการที่เลือก?');
+    if (!confirmed2) return;
 
     for (const id of selected) {
       await deleteDoc(doc(db, 'url_history', id));
