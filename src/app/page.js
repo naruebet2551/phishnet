@@ -136,7 +136,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-900 via-blue-800 to-blue-700 text-white px-4">
+    <main className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-blue-900 via-blue-800 to-blue-700 text-white">
       <nav className="sticky top-0 z-50 w-full bg-blue-950 bg-opacity-80 py-4 shadow-md">
         <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
           <span className="text-xl font-bold">{text[lang].title}</span>

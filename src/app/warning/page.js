@@ -31,7 +31,7 @@ export default function WarningPage() {
             กลับหน้าหลัก
           </Link>
           <a
-            href="https://www.thaicybercrime.go.th"
+            href="https://www.thaipoliceonline.com"
             target="_blank"
             rel="noopener noreferrer"
             className="bg-yellow-400 text-black font-bold py-2 px-6 rounded hover:bg-yellow-500 text-center"
