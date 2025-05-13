@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { db } from '../firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { distance } from 'fastest-levenshtein';
+import Link from 'next/link';
 
 export default function Home() {
   const [url, setUrl] = useState('');
@@ -28,6 +29,8 @@ export default function Home() {
       warn: '⚠️ ลิงก์น่าสงสัยหรืออันตราย',
       error: 'เกิดข้อผิดพลาดในการตรวจสอบลิงก์',
       empty: '⚠️ กรุณากรอกลิงก์',
+      menuHome: 'หน้าหลัก',
+      menuAbout: 'เกี่ยวกับ',
       checking: 'กำลังตรวจสอบ...'
     },
     en: {
@@ -39,6 +42,8 @@ export default function Home() {
       warn: '⚠️ This link looks suspicious or dangerous',
       error: 'An error occurred while checking the link',
       empty: '⚠️ Please enter a URL',
+      menuHome: 'Home',
+      menuAbout: 'About',
       checking: 'Checking...'
     }
   };
@@ -131,29 +136,71 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-900 via-blue-800 to-blue-700 text-white">
-      <h1 className="text-4xl font-bold mb-4">{text[lang].title}</h1>
-      <p className="mb-8 text-center">{text[lang].desc}</p>
-      <input
-        type="text"
-        placeholder={text[lang].placeholder}
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && checkPhishing()}
-        className="p-4 text-black rounded-lg w-full max-w-xl mb-4"
-      />
-      {loading ? (
-        <div className="animate-spin h-8 w-8 border-4 border-white border-t-yellow-400 rounded-full mb-4"></div>
-      ) : (
-        <button onClick={checkPhishing} className="bg-yellow-400 text-black font-bold px-6 py-2 rounded-lg">
-          {text[lang].check}
-        </button>
-      )}
-      {result && result !== 'warn' && (
-        <p className="mt-6 text-lg font-bold">
-          {text[lang][result]}
-        </p>
-      )}
+    <main className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-blue-900 via-blue-800 to-blue-700 text-white">
+      <nav className="sticky top-0 z-50 w-full bg-blue-950 bg-opacity-80 py-4 shadow-md">
+        <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
+          <span className="text-xl font-bold">{text[lang].title}</span>
+          <div className="space-x-4 text-sm">
+            <Link href="/" className="hover:underline">{text[lang].menuHome}</Link>
+            <Link href="/about" className="hover:underline">{text[lang].menuAbout}</Link>
+            <select
+              value={lang}
+              onChange={(e) => {
+                setLang(e.target.value);
+                localStorage.setItem('phishnet_lang', e.target.value);
+              }}
+              className="bg-blue-700 px-2 py-1 rounded"
+            >
+              <option value="th">ไทย</option>
+              <option value="en">EN</option>
+            </select>
+          </div>
+        </div>
+      </nav>
+
+      <div className="flex flex-col items-center p-6 w-full max-w-2xl">
+        <div className="bg-white text-gray-800 rounded-2xl shadow-xl p-8 w-full mt-8">
+          <h1 className="text-3xl font-bold text-center mb-4">{text[lang].title}</h1>
+          <p className="text-center text-gray-600 mb-6">{text[lang].desc}</p>
+
+          <input
+            type="text"
+            placeholder={text[lang].placeholder}
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && checkPhishing()}
+            className="w-full p-4 border border-gray-300 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+          />
+
+          {loading ? (
+            <div className="text-center mb-4">
+              <div className="w-6 h-6 border-4 border-white border-t-yellow-400 rounded-full animate-spin mx-auto"></div>
+              <div className="mt-2">{text[lang].checking}</div>
+            </div>
+          ) : (
+            <button
+              onClick={checkPhishing}
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 rounded-xl"
+            >
+              {text[lang].check}
+            </button>
+          )}
+
+          {result && result !== 'warn' && (
+            <div className={`mt-4 p-3 text-center rounded-xl font-bold text-lg ${
+              result === 'safe' ? 'bg-green-500 text-white' :
+              result === 'empty' ? 'bg-yellow-200 text-black' :
+              'bg-gray-500 text-white'
+            }`}>
+              {text[lang][result]}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <footer className="mt-10 text-sm text-white/70 text-center py-4">
+        © 2025 {text[lang].title} by ceo boss
+      </footer>
     </main>
   );
 }
