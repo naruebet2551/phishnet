@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 export default function WarningPage() {
   return (
@@ -25,17 +26,17 @@ export default function WarningPage() {
         </div>
 
         <div className="flex flex-col md:flex-row justify-center gap-4">
-          <a
+          <Link
             href="/"
-            className="bg-white text-red-700 font-bold py-2 px-6 rounded hover:bg-gray-100"
+            className="bg-white text-red-700 font-bold py-2 px-6 rounded hover:bg-gray-100 text-center"
           >
             กลับหน้าหลัก
-          </a>
+          </Link>
           <a
             href="https://www.thaicybercrime.go.th"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-yellow-400 text-black font-bold py-2 px-6 rounded hover:bg-yellow-500"
+            className="bg-yellow-400 text-black font-bold py-2 px-6 rounded hover:bg-yellow-500 text-center"
           >
             แจ้งเบาะแสกับตำรวจไซเบอร์
           </a>
