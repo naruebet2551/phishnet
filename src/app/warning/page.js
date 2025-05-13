@@ -26,7 +26,7 @@ export default function WarningPage() {
         <div className="flex flex-col md:flex-row justify-center gap-4">
           <Link
             href="/"
-            className="bg-white text-red-700 font-bold py-2 px-6 rounded hover:bg-gray-100 text-center"
+            className="bg-white text-red-700 font-bold px-6 py-2 rounded-lg hover:bg-gray-100 transition"
           >
             กลับหน้าหลัก
           </Link>
