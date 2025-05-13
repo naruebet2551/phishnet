@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { db } from '../../firebase';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 export default function AdminPage() {
   const [history, setHistory] = useState([]);
   const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -17,7 +18,7 @@ export default function AdminPage() {
       const items = snapshot.docs.map((doc) => {
         const data = doc.data();
         const ts = data.timestamp?.toDate();
-        return { ...data, timestamp: ts };
+        return { id: doc.id, ...data, timestamp: ts };
       });
       setHistory(items);
     });
@@ -39,13 +40,26 @@ export default function AdminPage() {
     doc.save('phishnet_report.pdf');
   };
 
-  const countByType = (type) => history.filter((item) => item.result === type).length;
-
   const handleLogout = () => {
     router.push('/login');
   };
 
-  const filtered = history.filter(item => item.url.toLowerCase().includes(search.toLowerCase()));
+  const toggleSelect = (id) => {
+    setSelected((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+  };
+
+  const deleteSelected = async () => {
+    if (selected.length === 0) return;
+    const confirmed = confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการที่เลือก?');
+    if (!confirmed) return;
+
+    for (const id of selected) {
+      await deleteDoc(doc(db, 'url_history', id));
+    }
+    setSelected([]);
+  };
+
+  const filtered = history.filter((item) => item.url.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <main className="min-h-screen bg-gray-900 text-white p-6 font-sans">
@@ -75,11 +89,11 @@ export default function AdminPage() {
           </div>
           <div className="bg-green-600 p-4 rounded-lg shadow text-center">
             <div className="text-sm text-green-100">ปลอดภัย</div>
-            <div className="text-2xl font-bold">{countByType('safe')}</div>
+            <div className="text-2xl font-bold">{history.filter(i => i.result === 'safe').length}</div>
           </div>
           <div className="bg-red-600 p-4 rounded-lg shadow text-center">
             <div className="text-sm text-red-100">อันตราย</div>
-            <div className="text-2xl font-bold">{countByType('warn')}</div>
+            <div className="text-2xl font-bold">{history.filter(i => i.result === 'warn').length}</div>
           </div>
         </section>
 
@@ -93,11 +107,23 @@ export default function AdminPage() {
           />
         </div>
 
+        {selected.length > 0 && (
+          <div className="mb-4">
+            <button
+              onClick={deleteSelected}
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+            >
+              ลบรายการที่เลือก ({selected.length})
+            </button>
+          </div>
+        )}
+
         <div className="bg-gray-800 rounded-xl shadow p-6 overflow-x-auto">
           <h2 className="text-xl font-semibold mb-4">ประวัติการตรวจ URL</h2>
           <table className="min-w-full text-sm text-left text-gray-200">
             <thead className="bg-gray-700 text-gray-100">
               <tr>
+                <th className="px-4 py-2">เลือก</th>
                 <th className="px-4 py-2">URL</th>
                 <th className="px-4 py-2">ผลการตรวจ</th>
                 <th className="px-4 py-2">เวลา</th>
@@ -105,8 +131,15 @@ export default function AdminPage() {
             </thead>
             <tbody>
               {filtered.map((item, i) => (
-                <tr key={i} className="border-t border-gray-700">
-                  <td className="px-4 py-2">{item.url}</td>
+                <tr key={item.id} className="border-t border-gray-700">
+                  <td className="px-4 py-2">
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(item.id)}
+                      onChange={() => toggleSelect(item.id)}
+                    />
+                  </td>
+                  <td className="px-4 py-2 break-all">{item.url}</td>
                   <td className={`px-4 py-2 font-semibold ${
                     item.result === 'warn' ? 'text-red-400' : 'text-green-400'
                   }`}>
