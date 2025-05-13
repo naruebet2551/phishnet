@@ -4,7 +4,7 @@ import Link from 'next/link';
 export default function WarningPage() {
   return (
     <main className="min-h-screen bg-red-800 text-white flex items-center justify-center px-6 py-12">
-      <div className="bg-red-600 rounded-xl shadow-2xl p-8 max-w-xl w-full border border-white/20">
+      <div className="bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-2xl max-w-2xl w-full shadow-2xl animate-fade-in-up">
         <h1 className="text-2xl md:text-3xl font-bold text-yellow-300 mb-3">
           ⚠️ ตรวจพบลิงก์ที่น่าสงสัยหรืออันตราย
         </h1>
