@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export default function WarningPage() {
   return (
-    <main className="min-h-screen bg-red-700 flex items-center justify-center px-4 text-white text-center">
+    <main className="min-h-screen bg-red-800 text-white flex items-center justify-center px-6 py-12">
       <div className="bg-red-600 rounded-xl shadow-2xl p-8 max-w-xl w-full border border-white/20">
         <h1 className="text-2xl md:text-3xl font-bold text-yellow-300 mb-3">
           ⚠️ ตรวจพบลิงก์ที่น่าสงสัยหรืออันตราย
