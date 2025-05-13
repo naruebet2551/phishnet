@@ -1,12 +1,19 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export default function WarningPage() {
   const [detectedUrl, setDetectedUrl] = useState('');
   const [lang, setLang] = useState('th');
 
-  
+  useEffect(() => {
+    const savedLang = localStorage.getItem('phishnet_lang') || 'th';
+    setLang(savedLang);
+    const url = localStorage.getItem('phishnet_last_url') || '';
+    setDetectedUrl(url);
+  }, []);
+
   const text = {
     th: {
       title: '⚠️ ตรวจพบลิงก์ที่น่าสงสัยหรืออันตราย',
@@ -43,12 +50,7 @@ export default function WarningPage() {
       <div className="bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-2xl max-w-2xl w-full shadow-2xl animate-fade-in-up">
         <h1 className="text-3xl font-bold text-center mb-4">{t.title}</h1>
 
-        {detectedUrl && (
-          <p className="text-center text-yellow-300 text-md font-mono mb-4 break-all">
-            {detectedUrl}
-          </p>
-        )}
-
+  
         <p className="text-center text-white/90 text-lg mb-6">{t.message}</p>
 
         <div className="bg-white/20 rounded-xl p-5 space-y-3 text-sm leading-relaxed">
