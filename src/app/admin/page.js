@@ -123,7 +123,9 @@ export default function AdminPage() {
           <table className="min-w-full text-sm text-left text-gray-200">
             <thead className="bg-gray-700 text-gray-100">
               <tr>
-                <th className="px-4 py-2">เลือก</th>
+                <th className="px-4 py-2">
+                  <input type="checkbox" onChange={(e) => setSelected(e.target.checked ? filtered.map(i => i.id) : [])} checked={selected.length === filtered.length && filtered.length > 0} /> เลือกทั้งหมด
+                </th>
                 <th className="px-4 py-2">URL</th>
                 <th className="px-4 py-2">ผลการตรวจ</th>
                 <th className="px-4 py-2">เวลา</th>
