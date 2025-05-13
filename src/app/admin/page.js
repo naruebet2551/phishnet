@@ -2,150 +2,97 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 export default function AdminPage() {
   const router = useRouter();
+  const [authenticated, setAuthenticated] = useState(false);
   const [history, setHistory] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [lang, setLang] = useState('th');
 
   useEffect(() => {
-    const isAdmin = localStorage.getItem('phishnet_admin') === 'true';
-    if (!isAdmin) {
-      router.push('/login');
-      return;
-    }
+    const auth = sessionStorage.getItem('phishnet_admin_auth');
+    if (!auth) router.push('/login');
+    else setAuthenticated(true);
 
-    const saved = JSON.parse(localStorage.getItem('phishnet_admin_history') || '[]');
-    setHistory(saved);
+    const savedLang = localStorage.getItem('phishnet_lang');
+    if (savedLang) setLang(savedLang);
+
+    const adminHistory = JSON.parse(localStorage.getItem('phishnet_admin_history') || '[]');
+    setHistory(adminHistory);
   }, []);
 
-  const deleteEntry = (indexToDelete) => {
-    const updated = history.filter((_, i) => i !== indexToDelete);
-    setHistory(updated);
-    localStorage.setItem('phishnet_admin_history', JSON.stringify(updated));
+  const logout = () => {
+    sessionStorage.removeItem('phishnet_admin_auth');
+    router.push('/login');
   };
-
-  const filteredHistory = history.filter((item) =>
-    item.url.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const exportPDF = () => {
     const doc = new jsPDF();
-    const lineHeight = 10;
-    const startY = 40;
-    const maxY = 270;
-    let y = startY;
-    let page = 1;
-
-    const now = new Date();
-    const timestamp = now.toLocaleString('th-TH', {
-      year: 'numeric', month: 'short', day: 'numeric',
-      hour: '2-digit', minute: '2-digit'
+    doc.text('PhishNet Admin Report', 14, 16);
+    autoTable(doc, {
+      startY: 20,
+      head: [['URL', 'Result']],
+      body: history.map((item) => [item.url, item.result]),
     });
-
-    const addHeader = () => {
-      doc.setFontSize(14);
-      doc.text('📄 รายงานประวัติการตรวจลิงก์ (PhishNet)', 10, 15);
-      doc.setFontSize(10);
-      doc.text(`สร้างเมื่อ: ${timestamp}`, 10, 22);
-    };
-
-    const addFooter = () => {
-      doc.setFontSize(10);
-      doc.text(`หน้า ${page}`, 100, 285);
-    };
-
-    addHeader();
-
-    filteredHistory.forEach((item, i) => {
-      if (y > maxY) {
-        addFooter();
-        doc.addPage();
-        page++;
-        y = startY;
-        addHeader();
-      }
-
-      doc.setFontSize(12);
-      doc.text(`• ${item.url} → ${item.result}`, 10, y);
-      y += lineHeight;
-    });
-
-    addFooter();
-    doc.save('phishnet-report.pdf');
+    doc.save('phishnet_report.pdf');
   };
 
-  return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 text-white p-6">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-center">🔐 Admin Dashboard</h1>
+  const chartData = {
+    series: [
+      history.filter((h) => h.result === 'safe').length,
+      history.filter((h) => h.result === 'warn').length
+    ],
+    options: {
+      labels: ['Safe', 'Dangerous'],
+      colors: ['#22c55e', '#ef4444'],
+      legend: { position: 'bottom' }
+    }
+  };
 
-        <div className="mb-4 text-center">
-          <input
-            type="text"
-            placeholder="🔍 ค้นหา URL..."
-            className="w-full max-w-md p-3 rounded-md text-black"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+  if (!authenticated) return null;
+
+  return (
+    <main className="min-h-screen bg-gray-100 text-gray-800 p-6">
+      <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">PhishNet Admin Dashboard</h1>
+          <div className="space-x-2">
+            <button onClick={exportPDF} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+              Export PDF
+            </button>
+            <button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+              Logout
+            </button>
+          </div>
         </div>
 
-        {filteredHistory.length === 0 ? (
-          <p className="text-center text-gray-300">ไม่มีข้อมูลที่ตรงกับคำค้น</p>
-        ) : (
-          <table className="w-full border border-gray-600 text-sm bg-white text-gray-800 rounded-lg overflow-hidden">
-            <thead className="bg-gray-200">
+        <div className="mb-8">
+          <Chart type="pie" series={chartData.series} options={chartData.options} width="100%" height={300} />
+        </div>
+
+        <h2 className="text-lg font-semibold mb-2">ตรวจสอบล่าสุด</h2>
+        <div className="border rounded-lg overflow-y-auto max-h-64">
+          <table className="w-full text-sm table-auto">
+            <thead className="bg-gray-200 sticky top-0">
               <tr>
-                <th className="py-2 px-4 text-left w-2/3">URL</th>
-                <th className="py-2 px-4 text-left">ผล</th>
-                <th className="py-2 px-4 text-center">ลบ</th>
+                <th className="px-4 py-2 text-left">URL</th>
+                <th className="px-4 py-2 text-left">ผลการตรวจ</th>
               </tr>
             </thead>
             <tbody>
-              {filteredHistory.map((item, i) => (
-                <tr key={i} className="border-t border-gray-300">
-                  <td className="py-2 px-4 break-all">{item.url}</td>
-                  <td className="py-2 px-4">{item.result}</td>
-                  <td className="py-2 px-4 text-center">
-                    <button
-                      onClick={() => deleteEntry(history.indexOf(item))}
-                      className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1 px-3 rounded"
-                    >
-                      ลบ
-                    </button>
-                  </td>
+              {history.map((item, index) => (
+                <tr key={index} className="odd:bg-white even:bg-gray-50">
+                  <td className="px-4 py-2">{item.url}</td>
+                  <td className="px-4 py-2">{item.result === 'safe' ? 'ปลอดภัย' : 'อันตราย'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        )}
-
-        <div className="mt-6 text-center space-x-3">
-          <button
-            onClick={exportPDF}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md"
-          >
-            ดาวน์โหลด PDF
-          </button>
-
-          <button
-            onClick={() => {
-              localStorage.removeItem('phishnet_admin');
-              window.location.href = '/login';
-            }}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md"
-          >
-            ออกจากระบบ
-          </button>
-
-          <Link
-            href="/"
-            className="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md"
-          >
-            กลับหน้าหลัก
-          </Link>
         </div>
       </div>
     </main>
