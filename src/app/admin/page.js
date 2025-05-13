@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { db } from '../../firebase';
-import { collection, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useRouter } from 'next/navigation';
@@ -49,12 +49,24 @@ export default function AdminPage() {
   };
 
   const deleteSelected = async () => {
+    const confirmed = confirm("คุณต้องการลบรายการที่เลือกใช่หรือไม่?");
+    if (!confirmed) return;
     if (selected.length === 0) return;
     const confirmed = confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการที่เลือก?');
     if (!confirmed) return;
 
     for (const id of selected) {
       await deleteDoc(doc(db, 'url_history', id));
+    }
+    setSelected([]);
+  };
+
+  const clearAll = async () => {
+    const confirmClear = confirm('ลบประวัติทั้งหมดออกจากระบบ? (ไม่สามารถย้อนกลับได้)');
+    if (!confirmClear) return;
+    const allDocs = await getDocs(collection(db, 'url_history'));
+    for (const d of allDocs.docs) {
+      await deleteDoc(doc(db, 'url_history', d.id));
     }
     setSelected([]);
   };
@@ -72,6 +84,12 @@ export default function AdminPage() {
               className="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded shadow"
             >
               Export PDF
+            </button>
+            <button
+              onClick={clearAll}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow"
+            >
+              ล้างข้อมูลทั้งหมด
             </button>
             <button
               onClick={handleLogout}
@@ -123,9 +141,7 @@ export default function AdminPage() {
           <table className="min-w-full text-sm text-left text-gray-200">
             <thead className="bg-gray-700 text-gray-100">
               <tr>
-                <th className="px-4 py-2">
-                  <input type="checkbox" onChange={(e) => setSelected(e.target.checked ? filtered.map(i => i.id) : [])} checked={selected.length === filtered.length && filtered.length > 0} /> เลือกทั้งหมด
-                </th>
+                <th className="px-4 py-2">เลือก</th>
                 <th className="px-4 py-2">URL</th>
                 <th className="px-4 py-2">ผลการตรวจ</th>
                 <th className="px-4 py-2">เวลา</th>
