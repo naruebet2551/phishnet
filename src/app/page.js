@@ -1,8 +1,7 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { db } from '../firebase';
+import { db } from './firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { distance } from 'fastest-levenshtein';
 import Link from 'next/link';
@@ -29,9 +28,9 @@ export default function Home() {
       warn: '⚠️ ลิงก์น่าสงสัยหรืออันตราย',
       error: 'เกิดข้อผิดพลาดในการตรวจสอบลิงก์',
       empty: '⚠️ กรุณากรอกลิงก์',
+      checking: 'กำลังตรวจสอบ...',
       menuHome: 'หน้าหลัก',
-      menuAbout: 'เกี่ยวกับ',
-      checking: 'กำลังตรวจสอบ...'
+      menuAbout: 'เกี่ยวกับ'
     },
     en: {
       title: 'PhishNet',
@@ -42,41 +41,9 @@ export default function Home() {
       warn: '⚠️ This link looks suspicious or dangerous',
       error: 'An error occurred while checking the link',
       empty: '⚠️ Please enter a URL',
+      checking: 'Checking...',
       menuHome: 'Home',
-      menuAbout: 'About',
-      checking: 'Checking...'
-    }
-  };
-
-  const gamblingKeywords = ['bet', 'casino', 'slot', 'หวย', 'บาคาร่า', 'แทงบอล', 'jackpot', 'พนัน'];
-  const gamblingNumbers = ['888', '777', '168', '999', '123', '456'];
-  const knownDomains = ['facebook.com', 'google.com', 'paypal.com', 'apple.com', 'microsoft.com'];
-
-  const isStructurallySuspicious = (url) => {
-    try {
-      const parsed = new URL(url);
-      const hostnameParts = parsed.hostname.split('.');
-      const queryParams = parsed.searchParams;
-      const isLong = url.length > 100;
-      const tooManySubdomains = hostnameParts.length > 3;
-      const tooManyParams = Array.from(queryParams).length >= 5;
-      const looksObfuscated = /[a-zA-Z0-9]{10,}/.test(parsed.pathname.replace(/\//g, ''));
-      return isLong || tooManySubdomains || tooManyParams || looksObfuscated;
-    } catch {
-      return false;
-    }
-  };
-
-  const isSpoofedDomain = () => {
-    try {
-      const parsed = new URL(url);
-      const hostname = parsed.hostname;
-      return knownDomains.some((domain) => {
-        const d = distance(domain, hostname);
-        return d <= 2 && hostname !== domain;
-      });
-    } catch {
-      return false;
+      menuAbout: 'About'
     }
   };
 
@@ -87,35 +54,26 @@ export default function Home() {
     }
 
     setLoading(true);
-
     try {
       const parsed = new URL(url);
       const fullText = url.toLowerCase() + parsed.pathname + parsed.search;
-
-      const hasGamblingKeyword = gamblingKeywords.some((word) => fullText.includes(word));
-      const hasGamblingNumber = gamblingNumbers.some((num) => fullText.includes(num));
-      const isStructureBad = isStructurallySuspicious(url);
-      const isSpoofed = isSpoofedDomain();
-
-      if (hasGamblingKeyword || hasGamblingNumber || isStructureBad || isSpoofed) {
-        await addDoc(collection(db, 'url_history'), {
-          url,
-          result: 'warn',
-          timestamp: Timestamp.now()
-        });
-        setResult('warn');
-        router.push('/warning');
-        return;
-      }
+      const keywords = ['login', 'bank', 'free', '888', 'slot', 'casino', 'หวย'];
+      const spoofedDomains = ['facebook.com', 'google.com', 'apple.com', 'paypal.com'];
+      const isKeyword = keywords.some((k) => fullText.includes(k));
+      const isSpoof = spoofedDomains.some((domain) => {
+        const d = distance(parsed.hostname, domain);
+        return d > 0 && d <= 2 && parsed.hostname !== domain;
+      });
 
       const aiRes = await fetch('/api/ai-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url })
       });
-
       const aiData = await aiRes.json();
-      const finalResult = aiData.result === 'warn' ? 'warn' : 'safe';
+
+      const isDanger = isKeyword || isSpoof || aiData.result === 'warn';
+      const finalResult = isDanger ? 'warn' : 'safe';
 
       await addDoc(collection(db, 'url_history'), {
         url,
@@ -124,8 +82,11 @@ export default function Home() {
       });
 
       setResult(finalResult);
+
       if (finalResult === 'warn') {
-        router.push('/warning');
+        localStorage.setItem('phishnet_last_url', url);  // <- บันทึก URL ที่อันตราย
+        router.push('/warning');                         // <- ไปหน้าเตือน
+        return;
       }
     } catch (err) {
       console.error(err);
@@ -137,7 +98,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-blue-900 via-blue-800 to-blue-700 text-white">
-      <nav className="sticky top-0 z-50 w-full bg-blue-950 bg-opacity-80 py-4 shadow-md">
+      <nav className="sticky top-0 w-full bg-blue-950 bg-opacity-80 py-4 shadow-md">
         <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
           <span className="text-xl font-bold">{text[lang].title}</span>
           <div className="space-x-4 text-sm">
@@ -158,49 +119,33 @@ export default function Home() {
         </div>
       </nav>
 
-      <div className="flex flex-col items-center p-6 w-full max-w-2xl">
-        <div className="bg-white text-gray-800 rounded-2xl shadow-xl p-8 w-full mt-8">
-          <h1 className="text-3xl font-bold text-center mb-4">{text[lang].title}</h1>
-          <p className="text-center text-gray-600 mb-6">{text[lang].desc}</p>
-
-          <input
-            type="text"
-            placeholder={text[lang].placeholder}
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && checkPhishing()}
-            className="w-full p-4 border border-gray-300 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-          />
-
-          {loading ? (
-            <div className="text-center mb-4">
-              <div className="w-6 h-6 border-4 border-white border-t-yellow-400 rounded-full animate-spin mx-auto"></div>
-              <div className="mt-2">{text[lang].checking}</div>
-            </div>
-          ) : (
-            <button
-              onClick={checkPhishing}
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 rounded-xl"
-            >
-              {text[lang].check}
-            </button>
-          )}
-
-          {result && result !== 'warn' && (
-            <div className={`mt-4 p-3 text-center rounded-xl font-bold text-lg ${
-              result === 'safe' ? 'bg-green-500 text-white' :
-              result === 'empty' ? 'bg-yellow-200 text-black' :
-              'bg-gray-500 text-white'
-            }`}>
-              {text[lang][result]}
-            </div>
-          )}
-        </div>
+      <div className="p-8 w-full max-w-2xl">
+        <h1 className="text-3xl font-bold mb-4 text-center">{text[lang].title}</h1>
+        <p className="text-center mb-6">{text[lang].desc}</p>
+        <input
+          type="text"
+          placeholder={text[lang].placeholder}
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && checkPhishing()}
+          className="w-full p-4 rounded-xl border border-gray-300 text-black mb-4"
+        />
+        <button
+          onClick={checkPhishing}
+          className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 rounded-xl mb-4"
+        >
+          {loading ? text[lang].checking : text[lang].check}
+        </button>
+        {result && result !== 'warn' && (
+          <div className={`text-center py-3 px-4 rounded-xl text-lg font-bold ${
+            result === 'safe' ? 'bg-green-500' :
+            result === 'empty' ? 'bg-yellow-200 text-black' :
+            'bg-gray-400'
+          }`}>
+            {text[lang][result]}
+          </div>
+        )}
       </div>
-
-      <footer className="mt-10 text-sm text-white/70 text-center py-4">
-        © 2025 {text[lang].title} by TEAM F=MAfia SME PRS
-      </footer>
     </main>
   );
 }
