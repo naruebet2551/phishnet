@@ -9,11 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "apexcharts": "^4.7.0",
     "fastest-levenshtein": "^1.0.16",
     "jspdf": "^3.0.1",
     "next": "15.3.2",
     "nodemailer": "^7.0.3",
     "react": "^19.0.0",
+    "react-apexcharts": "^1.7.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
