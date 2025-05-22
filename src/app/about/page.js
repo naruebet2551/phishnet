@@ -14,14 +14,14 @@ export default function AboutPage() {
 
   const text = {
     th: {
-      title: 'เกี่ยวกับ PhishNet',
-      desc1: 'PhishNet คือเว็บแอปสำหรับตรวจสอบความปลอดภัยของลิงก์ (URL) ที่อาจเป็นฟิชชิ่งหรือพยายามหลอกขโมยข้อมูลส่วนตัวหรือทางการเงินของผู้ใช้',
+      title: 'เกี่ยวกับ CyberSafeNet',
+      desc1: 'CyberSafeNet คือเว็บแอปสำหรับตรวจสอบความปลอดภัยของลิงก์ (URL) ที่อาจเป็นฟิชชิ่งหรือพยายามหลอกขโมยข้อมูลส่วนตัวหรือทางการเงินของผู้ใช้',
       desc2: 'ระบบใช้ Google Safe Browsing API ร่วมกับการวิเคราะห์คำที่น่าสงสัย เช่น login, bank และ free เพื่อประเมินความเสี่ยงของลิงก์',
       back: '← ย้อนกลับหน้าหลัก',
     },
     en: {
-      title: 'About PhishNet',
-      desc1: 'PhishNet is a web app that helps verify the safety of links (URLs) that may be phishing attempts or scams targeting your personal or financial data.',
+      title: 'About CyberSafeNet',
+      desc1: 'CyberSafeNet is a web app that helps verify the safety of links (URLs) that may be phishing attempts or scams targeting your personal or financial data.',
       desc2: 'The system uses Google Safe Browsing API combined with keyword analysis like login, bank, and free to assess the risk of each URL.',
       back: '← Back to Home',
     },
