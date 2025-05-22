@@ -34,7 +34,7 @@ export default function Home() {
       checking: 'กำลังตรวจสอบ...'
     },
     en: {
-      title: 'PhishNet',
+      title: 'CyberSafeNet',
       desc: 'Real-time anti-phishing URL scanner',
       placeholder: 'Paste URL to check...',
       check: 'Check',
