@@ -21,7 +21,7 @@ export default function Home() {
 
   const text = {
     th: {
-      title: 'PhishNet',
+      title: 'CyberSafeNet',
       desc: 'ระบบตรวจจับการหลอกลวงทางการเงินออนไลน์แบบเรียลไทม์',
       placeholder: 'วาง URL ที่ต้องการตรวจสอบ...',
       check: 'ตรวจสอบ',
