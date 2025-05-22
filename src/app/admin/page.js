@@ -27,7 +27,7 @@ export default function AdminPage() {
 
   const exportPDF = () => {
     const doc = new jsPDF();
-    doc.text('PhishNet URL Scan Report', 14, 16);
+    doc.text('CyberSafeNet URL Scan Report', 14, 16);
     autoTable(doc, {
       startY: 20,
       head: [['URL', 'Result', 'Checked At']],
@@ -37,7 +37,7 @@ export default function AdminPage() {
         item.timestamp?.toLocaleString() || '-',
       ]),
     });
-    doc.save('phishnet_report.pdf');
+    doc.save('cybersafenet_report.pdf');
   };
 
   const handleLogout = () => {
@@ -75,7 +75,7 @@ export default function AdminPage() {
     <main className="min-h-screen bg-gray-900 text-white p-6 font-sans">
       <div className="max-w-6xl mx-auto">
         <header className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          <h1 className="text-3xl font-bold">PhishNet Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold">CybersafeNet Admin Dashboard</h1>
           <div className="flex gap-3">
             <button
               onClick={exportPDF}
