@@ -18,7 +18,7 @@ export async function POST(req) {
   });
 
   const mailOptions = {
-    from: `"PhishNet" <${process.env.EMAIL_USER}>`,
+    from: `"CyberSafeNet" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'รหัส OTP สำหรับเข้าสู่ระบบ',
     text: `รหัส OTP ของคุณคือ: ${otp}`,
