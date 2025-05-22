@@ -75,7 +75,7 @@ export default function AdminPage() {
     <main className="min-h-screen bg-gray-900 text-white p-6 font-sans">
       <div className="max-w-6xl mx-auto">
         <header className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          <h1 className="text-3xl font-bold">CybersafeNet Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold">CyberSafeNet Admin Dashboard</h1>
           <div className="flex gap-3">
             <button
               onClick={exportPDF}
